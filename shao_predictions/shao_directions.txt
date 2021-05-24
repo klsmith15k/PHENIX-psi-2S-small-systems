@@ -1,0 +1,123 @@
+There are a few tips worth mentioning:
+
+0. We used the 200 GeV  PHENIX pp data (1105.1966) to fit psi(2S) and jpsi.
+
+1. We only provided reweighted (tagged as 'Rwgt') nCTEQ15 and EPPS16 results (proton PDF we used CT14NLO) from  our 1712.07024 (the jpsi constraint) and the LHAPDF grids available from 2012.11462.
+
+2. I also present 68CL and 90CL results. In default, the nPDFs give 90CL for some historical reasons. In 1712.07024, we converted to 68CL (i.e. 1 sigma). You can choose what you want with a proper indication/specification in your paper.
+
+3. I also include the different sets due to the different factorization scales. In 1712.07024  it is the dominant uncertainty in the reweighed results from jpsi. With the reweighted nPDFs, there are 3 factorization scales (MUFc, MUFd, MUFu) for jpsi. We strongly suggest to consider the scale dependencies. In your case, you can take the envelope of 3 scales in the these files.
+
+4. I calculate both the minimum-biased (i.e. 0-100% centrality class) RpAu (tagged as 'MB') and RpAu in your centrality classes (0-20%, 'Cen0To20'), (20-40%, 'Cen20To40'), (40-85%,'Cen40To85'), and (20-85%,'Cen20To85'). This is doable thanks to the centrality class and b slicing correspondence table sent by David (in cc), based on his Monte Carlo Glauber (MCG) code in 1710.07098. The centrality-dependent observables require additional modeling/assumptions of the b-dependent gluon shadowing. I used Eq.(15) in 2001.04256 and Optical Glauber (OG) model to model it. There are ambiguities in the form of function G(x) in the equation. The widespread form is G(x)~x^a with a=1. It however has never been rigorously tested. My recent study (cf. Figure 55 in 2012.14161) reveals the LHCb same-sign D data in pPb prefer larger values of a. I therefore provide both a=1 (tagged as 'a1') and a=2 (tagged as 'a2') for the non minimum biased predictions. You can compare and state it clearly in the text. Note that because the b slicing I have is 5% per interval, I can only provide you 85% instead of 84%, which I believe should be very close in any case.
+
+5. For the mean binary collisions in the centrality classes you listed, I have two sets of numbers. The first one is from MCG by David (1710.07098), and the second one is from my OG calculation with b slicing provided by David. They are as follows.
+
+centrality           <Ncoll> MCG                <Ncoll> OG
+0-20%               8.21+-2.75                     8.32
+20-40%             6.58+-2.42                     6.77
+40-85%             3.49+-1.59                     3.10
+20-85%             4.20+-1.78                     4.15
+
+6. There are both RpAu vs PT (tagged as '_PT_') and RpAu vs yCMS (tagged as '_yCMS_'), which you can read directly from the file names. For RpAu vs PT, there are both the forward ('fwd', 1.2<yCMS<2.2) and the backward ('bad',-2.2<yCMS<-1.2) files.
+
+7. Of course, we only include the (impact-parameter-dependent) shadowing effect here. For psi(2S), it is known that one should include the final state effect (e.g. comover), which is absent in our prediction.
+
+The description of tables are as follows.
+
+
+----------------------
+description of tables
+----------------------
+
+After you untar it, you can find several text files. Each one represents RpAu within your fiducial volume. Let us take psi2S_yCMS_PHENIX_nCTEQ15.90CL.MUFc.Rwgt.Cen0To20.a1.dat as an example. It is a table corresponding to the reweighted nCTEQ15 result (with the central scale MUFc) of yCMS distribution for psi(2S) at 90CL error and within the centrality class 0-20% and taking a=1 in b-dependent modeling. I also enclosed the reweighted nCTEQ15 (named 'nCTEQ15') / EPPS16 (named 'EPPS16') results at both 68CL (named '68CL') and 90CL (named '90CL') errors with our three scale choices (MU_F=0.5*MU_{0} (named 'MUFd'), MU_F=2.0*MU_{0} (named 'MUFu') and MU_F=MU_{0} (named 'MUFc')).
+
+Let me explain the format of each table. There are 5 numbers in each row of each table, which you can find in the following form
+
+xmin  xmax   RpAu (cen)    RpAu (min)   RpAu (max)
+
+where xmin and xmax are the lower and upper value of the bin in yCMS, RpAu (cen/min/max) is (central/minimal/maximal) p+Au RpAu in that bin. For example, in  psi2S_yCMS_PHENIX_nCTEQ15.90CL.MUFc.Rwgt.Cen0To20.a1.dat, the first row is
+
+-2.2000000e+00 -1.2000000e+00 +1.1860062e+00 +1.0710318e+00 +1.3009806e+00
+
+which means in -2.2<yCMS<-1.2, the central value of RpAu = +1.1860062e+00 in this bin.
+
+If you are using the numbers I sent, I would be appreciated if you can refer to both \cite{Lansberg:2016deg,Kusina:2017gkz,Kusina:2020dki} (the first one is our original method proposed and the last two are our recent reweighed studies) and the HELAC-Onia papers \cite{Shao:2012iz,Shao:2015vga} (the tool to calculate them), and others that are relevant for you which I mentioned above (e.g. 1710.07098).
+
+@article{Lansberg:2016deg,
+     author         = "Lansberg, Jean-Philippe and Shao, Hua-Sheng",
+     title          = "{Towards an automated tool to evaluate the impact of the
+                       nuclear modification of the gluon density on quarkonium, D
+                       and B meson production in proton–nucleus collisions}",
+     journal        = "Eur. Phys. J.",
+     volume         = "C77",
+     year           = "2017",
+     number         = "1",
+     pages          = "1",
+     doi            = "10.1140/epjc/s10052-016-4575-x",
+     eprint         = "1610.05382",
+     archivePrefix  = "arXiv",
+     primaryClass   = "hep-ph",
+     reportNumber   = "CERN-TH-2016-206",
+     SLACcitation   = "%%CITATION = ARXIV:1610.05382;%%"
+}
+
+@article{Kusina:2017gkz,
+      author         = "Kusina, Aleksander and Lansberg, Jean-Philippe and
+                        Schienbein, Ingo and Shao, Hua-Sheng",
+      title          = "{Gluon Shadowing in Heavy-Flavor Production at the LHC}",
+      journal        = "Phys. Rev. Lett.",
+      volume         = "121",
+      year           = "2018",
+      number         = "5",
+      pages          = "052004",
+      doi            = "10.1103/PhysRevLett.121.052004",
+      eprint         = "1712.07024",
+      archivePrefix  = "arXiv",
+      primaryClass   = "hep-ph",
+      SLACcitation   = "%%CITATION = ARXIV:1712.07024;%%"
+}
+
+@article{Kusina:2020dki,
+      author         = "Kusina, Aleksander and Lansberg, Jean-Philippe and
+                        Schienbein, Ingo and Shao, Hua-Sheng",
+      title          = "{Reweighted nuclear PDFs using Heavy-Flavor Production
+                        Data at the LHC: nCTEQ15$_{rwHF}$ \& EPPS16$_{rwHF}$}",
+      year           = "2020",
+      eprint         = "2012.11462",
+      archivePrefix  = "arXiv",
+      primaryClass   = "hep-ph",
+      reportNumber   = "IFJPAN-IV-2020-11",
+      SLACcitation   = "%%CITATION = ARXIV:2012.11462;%%"
+}
+
+
+@article{Shao:2015vga,
+     author         = "Shao, Hua-Sheng",
+     title          = "{HELAC-Onia 2.0: an upgraded matrix-element and event
+                       generator for heavy quarkonium physics}",
+     journal        = "Comput. Phys. Commun.",
+     volume         = "198",
+     year           = "2016",
+     pages          = "238-259",
+     doi            = "10.1016/j.cpc.2015.09.011",
+     eprint         = "1507.03435",
+     archivePrefix  = "arXiv",
+     primaryClass   = "hep-ph",
+     reportNumber   = "CERN-PH-TH-2015-155",
+     SLACcitation   = "%%CITATION = ARXIV:1507.03435;%%"
+}
+
+@article{Shao:2012iz,
+     author         = "Shao, Hua-Sheng",
+     title          = "{HELAC-Onia: An automatic matrix element generator for
+                       heavy quarkonium physics}",
+     journal        = "Comput. Phys. Commun.",
+     volume         = "184",
+     year           = "2013",
+     pages          = "2562-2570",
+     doi            = "10.1016/j.cpc.2013.05.023",
+     eprint         = "1212.5293",
+     archivePrefix  = "arXiv",
+     primaryClass   = "hep-ph",
+     SLACcitation   = "%%CITATION = ARXIV:1212.5293;%%"
+}

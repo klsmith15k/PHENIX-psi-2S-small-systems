@@ -1,0 +1,562 @@
+
+
+#include <TF1.h>
+#include <TMath.h>
+#include <Math/MinimizerOptions.h>
+#include <TVirtualFitter.h>
+#include <TMatrixDSym.h>
+#include <TFile.h>
+#include <TCanvas.h>
+#include <TH1D.h>
+#include <TGraph.h>
+#include <TLegend.h>
+#include <TStyle.h>
+#include <TROOT.h>
+#include <TLatex.h>
+#include <TChain.h>
+#include <TCanvas.h>
+#include <TH1.h>
+#include <TFitResult.h>
+#include <TH1F.h>
+#include <TH2D.h>
+#include <TH2F.h>
+#include <TF1.h>
+#include <TLine.h>
+#include <TRandom1.h>
+#include <TPolyLine.h>
+#include <TRandom3.h>
+#include <fstream>
+#include <iostream>
+#include <TGraphErrors.h>
+#include <TMultiGraph.h>
+#include <TObjArray.h>
+#include <TNtuple.h>
+#include <TPaveText.h>
+#include <TGraphAsymmErrors.h>
+
+#include "../RAB_N_0100.C"
+#include "../RAB_S_0100.C"
+
+using namespace std;
+
+void Draw_pAu_MB_predictions()
+{
+
+  // read in the predicitons from selected combination (u/c/d N/s  epps/ncteq  68/90
+
+  TFile *Run15pAu_prediction_files;
+  const int bins_pAu = 26;
+  const int columns = 5;
+  char name100[500];
+
+  const int narm = 2;
+  const int nptbin_pAu = 26;
+  const int nptbin_pAl = 20;
+  const int nptbin_HeAu = 19;
+
+  const int ncentbin_pAu = 1;
+  const int ncentbin_pAl = 1;
+  const int ncentbin_HeAu = 1;
+
+  const int nscales = 3;
+
+  double uepps_68_S[columns][bins_pAu] = {0}; // sigma_central, sigma_min, sigma_max, sigma_pp
+  double depps_68_S[columns][bins_pAu] = {0};
+  double cepps_68_S[columns][bins_pAu] = {0};
+	
+  double uepps_68_N[columns][bins_pAu] = {0};
+  double depps_68_N[columns][bins_pAu] = {0};
+  double cepps_68_N[columns][bins_pAu] = {0};
+
+  double env_68_N_min[bins_pAu] = {0};
+  double env_68_N_max[bins_pAu] = {0};
+  double env_68_S_min[bins_pAu] = {0};
+  double env_68_S_max[bins_pAu] = {0};
+
+  double RAA_pAu_N_abs[bins_pAu] = {0};
+  double RAA_pAu_S_abs[bins_pAu] = {0};
+
+  double value_d  = 0;
+  double value_c  = 0;
+  double value_u = 0;
+  double min_value = 0;
+  double max_value = 0;
+
+  double width[bins_pAu] = {0};
+
+  for(int i = 0; i < 6; i++)
+    {
+      if(i == 0)
+	sprintf(name100,"pAu_MB_predictions/tables_pAu_MB/jpsi_PT_bw_EPPS16.68CL.MUFu.Rwgt.dat"); // u_epps_68_S;
+      if(i == 1)
+        sprintf(name100,"pAu_MB_predictions/tables_pAu_MB/jpsi_PT_bw_EPPS16.68CL.MUFd.Rwgt.dat"); // d_epps_68_S;
+      if(i == 2)
+        sprintf(name100,"pAu_MB_predictions/tables_pAu_MB/jpsi_PT_bw_EPPS16.68CL.MUFc.Rwgt.dat"); // c_epps_68_S;
+      if(i == 3)
+        sprintf(name100,"pAu_MB_predictions/tables_pAu_MB/jpsi_PT_fw_EPPS16.68CL.MUFu.Rwgt.dat"); //  u_epps_68_N;
+      if(i == 4)
+        sprintf(name100,"pAu_MB_predictions/tables_pAu_MB/jpsi_PT_fw_EPPS16.68CL.MUFd.Rwgt.dat"); // d_epps_68_N;
+      if(i == 5)
+        sprintf(name100,"pAu_MB_predictions/tables_pAu_MB/jpsi_PT_fw_EPPS16.68CL.MUFc.Rwgt.dat"); // c_epps_68_N;
+
+      double xmin = 0;
+      double xmax = 0;
+      double sigma_central = 0;
+      double sigma_min = 0;
+      double sigma_max = 0;
+      double sigma_pp = 0;
+      double RpAu_theory = 0;
+      double RpAu_theory_min = 0;
+      double RpAu_theory_max = 0;
+      int counter = 0;
+
+      ifstream Run15pAu_prediction_files(name100);
+      if(Run15pAu_prediction_files)
+	{
+	  do 
+	    {
+	      double f0, f1, f2, f3, f4, f5;	  
+	      Run15pAu_prediction_files >> f0 >> f1 >> f2 >> f3 >> f4 >> f5 ;
+	      xmin = f0; xmax = f1; sigma_central = f2; sigma_min = f3; sigma_max = f4; sigma_pp = f5; RpAu_theory = f2/f5; RpAu_theory_min = f3/f5; RpAu_theory_max = f4/f5;
+	     
+	      cout << "Sigma central: " << sigma_central << endl;
+	      cout << "Sigma pp: " << sigma_pp << endl;
+	      cout << "RpAu Theory: " << RpAu_theory << endl;
+
+	      if(i == 0)
+		{
+		  uepps_68_S[0][counter] = sigma_central;
+		  //uepps_68_S[1][counter] = sigma_min;
+		  //uepps_68_S[2][counter] = sigma_max;
+		  uepps_68_S[1][counter] = RpAu_theory_min;
+		  uepps_68_S[2][counter] = RpAu_theory_max;
+		  uepps_68_S[3][counter] = sigma_pp;
+		  uepps_68_S[4][counter] = RpAu_theory;
+
+		  cout << uepps_68_S[0][counter] << endl;
+		}
+	      if(i == 1)
+		{
+		  depps_68_S[0][counter] = sigma_central;
+		  depps_68_S[1][counter] = RpAu_theory_min;
+		  depps_68_S[2][counter] = RpAu_theory_max;
+		  depps_68_S[3][counter] = sigma_pp;
+		  depps_68_S[4][counter] = RpAu_theory;
+		}
+	      if(i == 2)
+		{
+		  cepps_68_S[0][counter] = sigma_central;
+		  cepps_68_S[1][counter] = RpAu_theory_min;
+		  cepps_68_S[2][counter] = RpAu_theory_max;
+		  cepps_68_S[3][counter] = sigma_pp;
+		  cepps_68_S[4][counter] = RpAu_theory;
+		}
+	      if(i == 3)
+		{
+		  uepps_68_N[0][counter] = sigma_central;
+		  //uepps_68_N[1][counter] = sigma_min;
+		  //uepps_68_N[2][counter] = sigma_max;
+		  uepps_68_N[1][counter] = RpAu_theory_min;
+		  uepps_68_N[2][counter] = RpAu_theory_max;
+		  uepps_68_N[3][counter] = sigma_pp;
+		  uepps_68_N[4][counter] = RpAu_theory;
+		}
+	      if(i == 4)
+		{
+		  depps_68_N[0][counter] = sigma_central;
+		  depps_68_N[1][counter] = RpAu_theory_min;
+		  depps_68_N[2][counter] = RpAu_theory_max;
+		  depps_68_N[3][counter] = sigma_pp;
+		  depps_68_N[4][counter] = RpAu_theory;
+		}
+	      if(i == 5)
+		{
+		  cepps_68_N[0][counter] = sigma_central;
+		  cepps_68_N[1][counter] = RpAu_theory_min;
+		  cepps_68_N[2][counter] = RpAu_theory_max;
+		  cepps_68_N[3][counter] = sigma_pp;
+		  cepps_68_N[4][counter] = RpAu_theory;
+		}
+
+	      width[counter] = 0.125;
+	      RAA_pAu_N_abs[counter] = RAA_pAu_N_sys_frac_ERR[counter]*RAA_pAu_N[counter];
+	      RAA_pAu_S_abs[counter] = RAA_pAu_S_sys_frac_ERR[counter]*RAA_pAu_S[counter];
+
+	      counter++;
+	      // cout << "counter: " << counter <<  endl;
+	     	     
+	    } while(counter < 26);   //while(Run15pAu_prediction_files.good());
+	}
+      else
+	cout << "file does not exist" << endl;
+      
+    }
+
+
+  // find max value  [2]
+  for(int i =  0; i < 26; i++)
+    {
+      value_c = cepps_68_S[2][i];
+      value_d = depps_68_S[2][i];
+      value_u = uepps_68_S[2][i];
+
+      // compare u and d to get max_value
+      if(value_d > value_u)
+	max_value = value_d;
+      if(value_u > value_d)
+	max_value = value_u;
+      if(value_d == value_u)
+	max_value = value_u;
+
+      // compare max_value with c
+      if(value_c > max_value)
+	max_value = value_c;
+      if(max_value > value_c)
+	max_value = max_value;
+      if(value_c == max_value)
+	max_value = value_c;
+	 
+      // fill max envope with max values of the three scales
+      env_68_S_max[i] = max_value;
+    }
+
+  value_c = 0;
+  value_d = 0;
+  value_u = 0;
+
+ // find min value [1]
+  for(int i =  0; i < 26; i++)
+    {
+
+      value_c = cepps_68_S[1][i];
+      value_d = depps_68_S[1][i];
+      value_u = uepps_68_S[1][i];
+
+      // compare u and d to get min_value
+      if(value_d < value_u)
+	min_value = value_d;
+      if(value_u < value_d)
+	min_value = value_u;
+      if(value_d == value_u)
+	min_value = value_u;
+
+      // compare min_value with c
+      if(value_c < min_value)
+	min_value = value_c;
+      if(min_value < value_c)
+	min_value = min_value;
+      if(value_c == min_value)
+	min_value = value_c;
+	 
+      // fill min envope with min values of the three scales
+      env_68_S_min[i] = min_value;
+    }
+
+ bool draw_uscale = false;
+ bool draw_dscale = false;
+ bool draw_cscale = true;
+ bool draw_all = true;
+ 
+ char name[500];
+ char name2[500];
+
+ double x_errors[26] = {0};
+ double y_errors[26] = {0};
+ 
+
+ double pt_array_pAu[26] =  {0.125,0.375,0.625,0.875,1.125,1.375,1.625,1.875,2.125,2.375,2.625,2.875,3.125,3.375,3.625,3.875,4.125,4.375,4.625,4.875,5.125,5.375,5.625,5.875,6.25,6.75};
+ 
+  TGraphErrors *gr1; 
+  TGraphErrors *gr1_sys;
+  TGraphErrors *gr2; 
+  TGraphErrors *gr2_sys;
+  TGraphErrors *gr3;
+  TGraphErrors *gr4; 
+  TGraphErrors *gr5; 
+  TGraphErrors *gr6; 
+  TGraphErrors *gr7; 
+  TGraphErrors *gr8; 
+  TGraphErrors *gr9; 
+  TGraphErrors *gr10; 
+  TGraphErrors *gr11; 
+  TGraphErrors *gr12; 
+  TGraphErrors *gr13; 
+  TGraphErrors *gr55; 
+  TGraphErrors *gr555; 
+  TGraphErrors *gr77; 
+  TGraphErrors *gr777; 
+  TGraphErrors *gr_env_min; 
+  TGraphErrors *gr_env_max; 
+
+ 
+  
+  
+ if(draw_uscale)
+   {   
+     gr1 = new TGraphErrors(bins_pAu,pt_array_pAu,RAA_pAu_N,x_errors,RAA_pAu_N_ERR);
+     gr1_sys = new TGraphErrors(bins_pAu,pt_array_pAu, RAA_pAu_N,width,RAA_pAu_N_abs);
+
+      gr3 = new TGraphErrors(bins_pAu, pt_array_pAu, uepps_68_N[0], x_errors, y_errors);   // central  N
+      gr5 = new TGraphErrors(bins_pAu, pt_array_pAu, uepps_68_N[1], x_errors, y_errors);  //min  N
+      gr7 = new TGraphErrors(bins_pAu, pt_array_pAu, uepps_68_N[2], x_errors, y_errors);  //max  N
+       gr9 = new TGraphErrors(bins_pAu, pt_array_pAu, uepps_68_N[3], x_errors, y_errors);  // pp  N
+       gr11 = new TGraphErrors(bins_pAu, pt_array_pAu, uepps_68_N[4], x_errors, y_errors);  // RpAu  predicted N
+
+       gr2 = new TGraphErrors(bins_pAu,pt_array_pAu,RAA_pAu_S,x_errors,RAA_pAu_S_ERR);
+       gr2_sys = new TGraphErrors(bins_pAu,pt_array_pAu, RAA_pAu_S,width,RAA_pAu_S_abs);
+
+       gr4 = new TGraphErrors(bins_pAu, pt_array_pAu, uepps_68_S[0], x_errors, y_errors);   // central  S
+       gr6 = new TGraphErrors(bins_pAu, pt_array_pAu, uepps_68_S[1], x_errors, y_errors);  //min  S
+       gr8 = new TGraphErrors(bins_pAu, pt_array_pAu, uepps_68_S[2], x_errors, y_errors);  //max  S
+      gr10 = new TGraphErrors(bins_pAu, pt_array_pAu, uepps_68_S[3], x_errors, y_errors);  // pp   S
+      gr12 = new TGraphErrors(bins_pAu, pt_array_pAu, uepps_68_S[4], x_errors, y_errors);  // RpAu predicted   S
+   }
+
+  
+ if(draw_dscale)
+   {   
+     gr1 = new TGraphErrors(bins_pAu,pt_array_pAu,RAA_pAu_N,x_errors,RAA_pAu_N_ERR);
+     gr1_sys = new TGraphErrors(bins_pAu,pt_array_pAu, RAA_pAu_N,width,RAA_pAu_N_abs);
+
+     gr3 = new TGraphErrors(bins_pAu, pt_array_pAu, depps_68_N[0], x_errors, y_errors);   // central  N
+     gr5 = new TGraphErrors(bins_pAu, pt_array_pAu, depps_68_N[1], x_errors, y_errors);  // min  N
+     gr7 = new TGraphErrors(bins_pAu, pt_array_pAu, depps_68_N[2], x_errors, y_errors);  // max  N
+     gr9 = new TGraphErrors(bins_pAu, pt_array_pAu, depps_68_N[3], x_errors, y_errors);  // pp  N
+     gr11 = new TGraphErrors(bins_pAu, pt_array_pAu, depps_68_N[4], x_errors, y_errors);  // pp  N
+
+     gr2 = new TGraphErrors(bins_pAu,pt_array_pAu,RAA_pAu_S,x_errors,RAA_pAu_S_ERR);
+     gr2_sys = new TGraphErrors(bins_pAu,pt_array_pAu, RAA_pAu_S,width,RAA_pAu_S_abs);
+
+     gr4 = new TGraphErrors(bins_pAu, pt_array_pAu, depps_68_S[0], x_errors, y_errors);   // central  S
+     gr6 = new TGraphErrors(bins_pAu, pt_array_pAu, depps_68_S[1], x_errors, y_errors);  // min  S
+     gr8 = new TGraphErrors(bins_pAu, pt_array_pAu, depps_68_S[2], x_errors, y_errors);  // max  S
+     gr10 = new TGraphErrors(bins_pAu, pt_array_pAu, depps_68_S[3], x_errors, y_errors);  // pp   S
+     gr12 = new TGraphErrors(bins_pAu, pt_array_pAu, depps_68_S[4], x_errors, y_errors);  // pp   S
+   }
+
+  
+ if(draw_cscale)
+   {   
+     gr1 = new TGraphErrors(bins_pAu,pt_array_pAu,RAA_pAu_N,x_errors,RAA_pAu_N_ERR);
+     gr1_sys = new TGraphErrors(bins_pAu,pt_array_pAu, RAA_pAu_N,width,RAA_pAu_N_abs);
+
+     gr3 = new TGraphErrors(bins_pAu, pt_array_pAu, cepps_68_N[0], x_errors, y_errors);   // central  N
+     //    gr5 = new TGraphErrors(bins_pAu, pt_array_pAu, cepps_68_N[1], x_errors, y_errors);  // min  N
+     //    gr7 = new TGraphErrors(bins_pAu, pt_array_pAu, cepps_68_N[2], x_errors, y_errors);  // max  N
+     gr9 = new TGraphErrors(bins_pAu, pt_array_pAu, cepps_68_N[3], x_errors, y_errors);  // pp  N
+     gr11 = new TGraphErrors(bins_pAu, pt_array_pAu, cepps_68_N[4], x_errors, y_errors);  // pp  N
+
+     gr2 = new TGraphErrors(bins_pAu,pt_array_pAu,RAA_pAu_S,x_errors,RAA_pAu_S_ERR);
+     gr2_sys = new TGraphErrors(bins_pAu,pt_array_pAu, RAA_pAu_S,width,RAA_pAu_S_abs);
+
+     gr4 = new TGraphErrors(bins_pAu, pt_array_pAu, cepps_68_S[0], x_errors, y_errors);   // central  S
+     gr6 = new TGraphErrors(bins_pAu, pt_array_pAu, cepps_68_S[1], x_errors, y_errors);  // min  S
+     gr8 = new TGraphErrors(bins_pAu, pt_array_pAu, cepps_68_S[2], x_errors, y_errors);  // max  S
+     gr10 = new TGraphErrors(bins_pAu, pt_array_pAu, cepps_68_S[3], x_errors, y_errors);  // pp   S
+     gr12 = new TGraphErrors(bins_pAu, pt_array_pAu, cepps_68_S[4], x_errors, y_errors);  // pp   S
+   }
+
+ if(draw_all)
+   {   
+    
+     gr5 = new TGraphErrors(bins_pAu, pt_array_pAu, cepps_68_S[1], x_errors, y_errors);  // min  S
+     gr7 = new TGraphErrors(bins_pAu, pt_array_pAu, cepps_68_S[2], x_errors, y_errors);  // max  S
+   
+     gr55 = new TGraphErrors(bins_pAu, pt_array_pAu, depps_68_S[1], x_errors, y_errors);  // min  S
+     gr77 = new TGraphErrors(bins_pAu, pt_array_pAu, depps_68_S[2], x_errors, y_errors);  // max  S
+   
+     gr555 = new TGraphErrors(bins_pAu, pt_array_pAu, uepps_68_S[1], x_errors, y_errors);  // min  S
+     gr777 = new TGraphErrors(bins_pAu, pt_array_pAu, uepps_68_S[2], x_errors, y_errors);  // max  S
+  
+     gr_env_min = new TGraphErrors(bins_pAu, pt_array_pAu, env_68_S_min, x_errors, y_errors);  // min  S envelope
+     gr_env_max = new TGraphErrors(bins_pAu, pt_array_pAu, env_68_S_max, x_errors, y_errors);  // max  S envelope
+
+   }
+
+
+  TCanvas *c1 = new TCanvas("c1","South R_{pAu}",200,10,700,500);
+  c1->SetGrid();
+  c1->cd(1);  
+  
+  // NORTH RpAu measurement
+  // gr1->SetTitle("R_{pAu} vs. p_{T}");
+  // gr1->GetXaxis()->SetTitle("Transverse Momentum (GeV/c)");
+  // gr1->SetMarkerStyle(20);
+  // gr1->SetMarkerColor(kBlack);
+  // gr1->SetMarkerSize(1.0);
+  // gr1->GetYaxis()->SetRangeUser(0,2.5);
+  // gr1->GetXaxis()->SetLimits(0,7);
+  // gr1->Draw("AP");
+
+ // SOUTH RpAu measurement
+  gr2->SetTitle("R_{pAu} vs. p_{T}");
+  gr2->GetXaxis()->SetTitle("Transverse Momentum (GeV/c)");
+  gr2->SetMarkerStyle(20);
+  gr2->SetMarkerColor(kBlack);
+  gr2->SetMarkerSize(1.0);
+  gr2->GetYaxis()->SetRangeUser(0,2.5);
+  gr2->GetXaxis()->SetLimits(0,7);
+  //gr2->Draw("AP");
+
+  // prediction central value
+  gr3->SetMarkerStyle(20);
+  gr3->SetMarkerColor(kRed+2);
+  gr3->SetMarkerSize(1.0);
+  // gr3->Draw("P");
+
+ // prediction c min value
+  gr5->SetTitle("R_{pAu} vs. p_{T} bkwd");
+  gr5->GetXaxis()->SetTitle("Transverse Momentum (GeV/c)");
+  gr5->SetLineStyle(3);
+  gr5->SetLineColor(kCyan+2);
+  gr5->SetLineWidth(3.0);
+   gr5->GetYaxis()->SetRangeUser(0,2);
+  gr5->GetXaxis()->SetLimits(0,7);
+  gr5->Draw("AL");
+
+// prediction c max value
+  gr7->SetLineStyle(3);
+  gr7->SetLineColor(kCyan+2);
+  gr7->SetLineWidth(3.0);
+  gr7->Draw("L");
+
+// prediction pp cross section
+ //  gr9->SetMarkerStyle(20);
+//   gr9->SetMarkerColor(kBlue);
+//   gr9->SetMarkerSize(1.0);
+//   // gr9->Draw("P");
+
+// // prediction RpAu?
+//   gr11->SetLineStyle(1);
+//   gr11->SetLineColor(kRed+2);
+//   gr11->SetLineWidth(2.0);
+//   // gr11->Draw("L");
+
+//   // // NORTH systematic error
+//   // gr1_sys->SetLineColor(kBlack);
+//   // gr1_sys->SetFillStyle(0);
+//   //  gr1_sys->Draw("e2same");
+
+//  // NORTH systematic error
+//   gr2_sys->SetLineColor(kBlack);
+//   gr2_sys->SetFillStyle(0);
+  // gr2_sys->Draw("e2same");
+
+ // prediction min value d
+  gr55->SetLineStyle(3);
+  gr55->SetLineColor(kBlue+2);
+  gr55->SetLineWidth(3.0);
+  gr55->Draw("L");
+
+// prediction max value d
+  gr77->SetLineStyle(3);
+  gr77->SetLineColor(kBlue+2);
+  gr77->SetLineWidth(3.0);
+  gr77->Draw("L");
+
+// prediction min value u
+  gr555->SetLineStyle(3);
+  gr555->SetLineColor(kGreen+2);
+  gr555->SetLineWidth(3.0);
+  gr555->Draw("L");
+
+// prediction max value u
+  gr777->SetLineStyle(3);
+  gr777->SetLineColor(kGreen+2);
+  gr777->SetLineWidth(3.0);
+  gr777->Draw("L");
+
+  // draw min envlope
+  gr_env_min->SetLineStyle(1);
+  gr_env_min->SetLineColor(kRed+2);
+  gr_env_min->SetLineWidth(5.0);
+  gr_env_min->Draw("L");
+
+// draw max envelope
+  gr_env_max->SetLineStyle(1);
+  gr_env_max->SetLineColor(kRed+2);
+  gr_env_max->SetLineWidth(5.0);
+  gr_env_max->Draw("L");
+
+
+
+  
+ TLegend *leg = new TLegend(0.1, 0.7, 0.4, 0.9);  //(start x, start y, end x, end y)
+ leg->SetFillColor(0); 
+ leg->SetTextSize(0.03); 
+ 
+ // leg->AddEntry(gr1, "Run15pAu, S 0-84", "p");
+ leg->AddEntry(gr5, "EPPS16 Reweighted (c scale) 68CL", "l"); 
+ leg->AddEntry(gr55, "EPPS16 Reweighted (d scale) 68CL", "l"); 
+ leg->AddEntry(gr555, "EPPS16 Reweighted (u scale) 68CL", "l");
+ 
+ leg->Draw();  
+ 
+
+
+
+ /*
+ //////////////////////////////////////////////////////////////
+  TCanvas *c2 = new TCanvas("c2","South R_{pAu}",200,10,700,500);
+  c2->SetGrid();
+  c2->cd(0);  
+  
+  // RpAu measurement
+  gr2->SetTitle("R_{pAu} vs. p_{T}");
+  gr2->GetXaxis()->SetTitle("Transverse Momentum (GeV/c)");
+  gr2->SetMarkerColor(kBlue);
+  gr2->SetMarkerSize(1.0);
+  gr2->SetMarkerStyle(20); 
+  gr2->GetYaxis()->SetRangeUser(0,2.5);
+  gr2->GetXaxis()->SetLimits(0,7);
+
+ // prediction central value
+  gr4->SetMarkerStyle(20);
+  gr4->SetMarkerColor(kRed+2);
+  gr4->SetMarkerSize(1.0);
+  // gr4->Draw("P");
+
+ // prediction min value
+  gr6->SetLineStyle(3);
+  gr6->SetLineColor(kRed+2);
+  gr6->SetLineWidth(3.0);
+  gr6->Draw("L");
+
+// prediction max value
+  gr8->SetLineStyle(3);
+  gr8->SetLineColor(kRed+2);
+  gr8->SetLineWidth(3.0);
+  gr8->Draw("L");
+
+// prediction pp cross section
+  gr10->SetMarkerStyle(20);
+  gr10->SetMarkerColor(kBlue);
+  gr10->SetMarkerSize(1.0);
+  // gr10->Draw("P");
+
+// prediction RpAu?
+  gr12->SetLineStyle(1);
+  gr12->SetLineColor(kRed+2);
+  gr12->SetLineWidth(2.0);
+  gr12->Draw("L");
+
+ 
+ gr2_sys->SetLineColor(kBlue);
+ gr2_sys->SetFillStyle(0);
+ gr2_sys->Draw("e2same");
+ 
+  
+ TLegend *leg2 = new TLegend(0.1, 0.7, 0.4, 0.9);  //(start x, start y, end x, end y)
+ leg2->SetFillColor(0); 
+ leg2->SetTextSize(0.03); 
+ 
+ leg2->AddEntry(gr2, "Run15pAu, S 0-84", "p");
+ // leg2->AddEntry(gr4, "EPPS16 Reweighted (u scale) 68CL central", "p");
+ //leg2->AddEntry(gr6, "EPPS16 Reweighted (u scale) 68CL min", "l"); 
+ //leg2->AddEntry(gr8, "EPPS16 Reweighted (u scale) 68CL max ", "l"); 
+ //leg2->AddEntry(gr10, "CT14NLO pp cross section", "p"); 
+ leg2->AddEntry(gr12, "EPPS16 Reweighted (u scale) 68CL", "l"); 
+ leg2->Draw();  
+ */
+
+  }
