@@ -1,0 +1,828 @@
+#include <Fun4AllReturnCodes.h>
+#include <PHCompositeNode.h>
+#include <getClass.h>
+#include <MWGConsts.h>
+#include <Tools.h>
+#include <Fun4AllServer.h>
+#include <SyncObject.h>
+#include <RunHeader.h>
+#include <VtxOut.h>
+#include <TH1F.h>
+#include <TH2F.h>
+#include <TH3F.h>
+#include <MCHepMCParticleContainer.h>
+#include <MCHepMCParticle.h>
+#include <SingleMuonContainer.h>
+#include <PHGlobal.h>
+#include <PHTFileServer.h>
+#include <TFile.h>
+#include <TTree.h>
+#include <TF1.h>
+#include <TMath.h>
+#include <PHPoint.h>
+#include <PHGeometry.h>
+#include <TFvtxCompactTrkMap.h>
+#include <TFvtxCompactTrk.h>
+#include <SvxSegmentList.h>
+#include <SvxSegment.h>
+#include <TrigLvl1.h>
+#include <PHPythiaContainer.h>
+#include <TMCParticle.h>
+
+#include "mFillAnaTree.h"
+
+using namespace std;
+
+//___________________________________________________________________
+mFillAnaTree::mFillAnaTree(const char *name, const char *rootfile):
+  SubsysReco(name)
+{
+
+	_filename = rootfile;
+	_dataset = "Run15pp200";
+	//	_is_sim = is_sim;
+	_is_sim = 0;
+	_is_upsilon = false;
+	_is_phi = false;
+	_target_pid = 443;
+	_nevent = 0;
+	_nevent_skip = 0;
+
+	return;
+}
+
+//___________________________________________________________________
+mFillAnaTree::~mFillAnaTree()
+{
+
+	return;
+}
+
+//___________________________________________________________________
+int mFillAnaTree::Init(PHCompositeNode *top_node)
+{  
+
+	MUTOO::PRINT(std::cout,"mFillAnaTree::Init");
+
+	first = true;
+
+	file_out = new TFile(_filename.data(),"RECREATE");
+	std::cout << "opening TFile " << _filename.data() << std::endl;
+
+	//
+	hpT_eta_zvtx = new TH3F("hpT_eta_zvtx","",200,0,20,200,-5,5,60,-30,30);
+	hpT_y_zvtx = new TH3F("hpT_y_zvtx","",400,0,20,200,-5,5,60,-30,30);
+	hpT_y_zvtx_w_z = new TH3F("hpT_y_zvtx_w_z","",400,0,20,200,-5,5,60,-30,30);
+	hpT_y_zvtx_w_dAu = new TH3F("hpT_y_zvtx_w_dAu","",400,0,20,200,-5,5,60,-30,30);
+	hpT_y_zvtx_w_dAu_y = new TH3F("hpT_y_zvtx_w_dAu_y","",400,0,20,200,-5,5,60,-30,30);
+	hpT_y_zvtx_w_dAu_pT = new TH3F("hpT_y_zvtx_w_dAu_pT","",400,0,20,200,-5,5,60,-30,30);
+
+	hpT_y_zvtx_w_pp = new TH3F("hpT_y_zvtx_w_pp","",400,0,20,200,-5,5,60,-30,30);
+	hpT_y_zvtx_w_pp_y = new TH3F("hpT_y_zvtx_w_pp_y","",400,0,20,200,-5,5,60,-30,30);
+	hpT_y_zvtx_w_pp_pT = new TH3F("hpT_y_zvtx_w_pp_pT","",400,0,20,200,-5,5,60,-30,30);
+
+	/*
+	hpT_eta_zvtx_S = new TH3F("hpT_eta_zvtx_S","",200,0,20,100,-5,5,60,-30,30);
+	hpT_y_zvtx_S = new TH3F("hpT_y_zvtx_S","",200,0,20,100,-5,5,60,-30,30);
+	hpT_y_zvtx_S_w_z = new TH3F("hpT_y_zvtx_S_w_z","",200,0,20,100,-5,5,60,-30,30);
+	hpT_y_zvtx_S_w_dAu = new TH3F("hpT_y_zvtx_S_w_dAu","",200,0,20,100,-5,5,60,-30,30);
+	hpT_y_zvtx_S_w_dAu_y = new TH3F("hpT_y_zvtx_S_w_dAu_y","",200,0,20,100,-5,5,60,-30,30);
+	hpT_y_zvtx_S_w_dAu_pT = new TH3F("hpT_y_zvtx_S_w_dAu_pT","",200,0,20,100,-5,5,60,-30,30);
+
+	hpT_y_zvtx_S_w_pp = new TH3F("hpT_y_zvtx_S_w_pp","",200,0,20,100,-5,5,60,-30,30);
+	hpT_y_zvtx_S_w_pp_y = new TH3F("hpT_y_zvtx_S_w_pp_y","",200,0,20,100,-5,5,60,-30,30);
+	hpT_y_zvtx_S_w_pp_pT = new TH3F("hpT_y_zvtx_S_w_pp_pT","",200,0,20,100,-5,5,60,-30,30);
+
+	hpT_eta_zvtx_N = new TH3F("hpT_eta_zvtx_N","",200,0,20,100,-5,5,60,-30,30);
+	hpT_y_zvtx_N = new TH3F("hpT_y_zvtx_N","",200,0,20,100,-5,5,60,-30,30);
+	hpT_y_zvtx_N_w_z = new TH3F("hpT_y_zvtx_N_w_z","",200,0,20,100,-5,5,60,-30,30);
+	hpT_y_zvtx_N_w_dAu = new TH3F("hpT_y_zvtx_N_w_dAu","",200,0,20,100,-5,5,60,-30,30);
+	hpT_y_zvtx_N_w_dAu_y = new TH3F("hpT_y_zvtx_N_w_dAu_y","",200,0,20,100,-5,5,60,-30,30);
+	hpT_y_zvtx_N_w_dAu_pT = new TH3F("hpT_y_zvtx_N_w_dAu_pT","",200,0,20,100,-5,5,60,-30,30);
+
+	hpT_y_zvtx_N_w_pp = new TH3F("hpT_y_zvtx_N_w_pp","",200,0,20,100,-5,5,60,-30,30);
+	hpT_y_zvtx_N_w_pp_y = new TH3F("hpT_y_zvtx_N_w_pp_y","",200,0,20,100,-5,5,60,-30,30);
+	hpT_y_zvtx_N_w_pp_pT = new TH3F("hpT_y_zvtx_N_w_pp_pT","",200,0,20,100,-5,5,60,-30,30);
+	*/
+
+	hp_pT_y_zvtx = new TH3F("hp_pT_y_zvtx","",200,0,20,100,-5,5,60,-30,30);
+	hp_pT_eta_zvtx = new TH3F("hp_pT_eta_zvtx","",200,0,20,100,-5,5,60,-30,30);
+	hd_pT_y_zvtx = new TH3F("hd_pT_y_zvtx","",200,0,20,100,-5,5,60,-30,30);
+
+	hmu_pT_y_zvtx = new TH3F("hmu_pT_y_zvtx","",200,0,20,100,-5,5,60,-30,30);
+	hmu_pT_y_zvtx_w_dAu = new TH3F("hmu_pT_y_zvtx_w_dAu","",200,0,20,100,-5,5,60,-30,30);
+	hmu_pT_y_zvtx_w_pp = new TH3F("hmu_pT_y_zvtx_w_pp","",200,0,20,100,-5,5,60,-30,30);
+	hmu_y0_y1 = new TH2F("hmu_y0_y1","",100,-5,5,100,-5,5);
+	//
+	//
+	
+	file_weight0 = new TFile("/gpfs/mnt/gpfs02/phenix/hhj/hhj1/shlim/work/15.run15/14.acc_by_eff/01.Inclusive_Jpsi/outfile_jpsi_weight_for_inclusive.root","READ");
+	//file_weight0 = new TFile("/gpfs/mnt/gpfs02/phenix/hhj/hhj1/shlim/work/15.run15/14.acc_by_eff/01.Inclusive_Jpsi/outfile_jpsi_weight_for_inclusive_pythia6.root","READ");
+	fw_pT_dAu_fwd = (TF1*)file_weight0->Get("fwt_pT_dAu_fwd");
+	fw_pT_dAu_bwd = (TF1*)file_weight0->Get("fwt_pT_dAu_bwd");
+	fw_y_dAu = (TF1*)file_weight0->Get("fwt_y_dAu");
+
+	fw_pT_pp = (TF1*)file_weight0->Get("fwt_pT_pp");
+	fw_y_pp = (TF1*)file_weight0->Get("fwt_y_pp");
+
+	if ( !fw_pT_dAu_fwd || !fw_pT_dAu_bwd || !fw_y_dAu || !fw_y_pp || !fw_pT_pp ){
+		cout << "CAN NOT FIND WEIGHT-FUNCTION!!" << endl;
+		exit(1);
+	}
+
+	if ( _dataset=="Run15pp200" ){
+		file_weight1 = new TFile("/gpfs/mnt/gpfs02/phenix/hhj/hhj1/shlim/work/15.run15/14.acc_by_eff/01.Inclusive_Jpsi/outfile_jpsi_zweight_Run15pp200.root","READ");
+	}else if ( _dataset=="Run14HeAu200" ){
+		file_weight1 = new TFile("/gpfs/mnt/gpfs02/phenix/hhj/hhj1/shlim/work/15.run15/14.acc_by_eff/01.Inclusive_Jpsi/outfile_jpsi_zweight_Run14HeAu200.root","READ");
+	}else if ( _dataset=="Run15pAu200" ){
+		file_weight1 = new TFile("/gpfs/mnt/gpfs02/phenix/hhj/hhj1/shlim/work/15.run15/14.acc_by_eff/01.Inclusive_Jpsi/outfile_jpsi_zweight_Run15pAu200.root","READ");
+	}else if ( _dataset=="Run15pAl200" ){
+		file_weight1 = new TFile("/gpfs/mnt/gpfs02/phenix/hhj/hhj1/shlim/work/15.run15/14.acc_by_eff/01.Inclusive_Jpsi/outfile_jpsi_zweight_Run15pAl200.root","READ");
+	}else if ( _dataset=="Run9pp200" ){
+		file_weight1 = new TFile("/gpfs/mnt/gpfs02/phenix/hhj/hhj1/shlim/work/04.run9_pdst/12.dimuon/acceff/outfile_jpsi_zweight_Run9pp200.root","READ");
+	}else if ( _dataset=="Run9pp500" ){
+		file_weight1 = new TFile("/gpfs/mnt/gpfs02/phenix/hhj/hhj1/shlim/work/04.run9_pdst/12.dimuon/acceff/outfile_jpsi_zweight_Run9pp500.root","READ");
+	}else{
+		file_weight1 = new TFile("/gpfs/mnt/gpfs02/phenix/hhj/hhj1/shlim/work/15.run15/14.acc_by_eff/01.Inclusive_Jpsi/outfile_jpsi_zweight_Run15pp200.root","READ");
+	}
+	fw_z = (TF1*)file_weight1->Get("fwt_z");
+	//fw_z_S = (TF1*)file_weight1->Get("fwt_z_S");
+	//fw_z_N = (TF1*)file_weight1->Get("fwt_z_N");
+
+	if ( !fw_z ){
+		cout << "CAN NOT FIND WEIGHT-FUNCTION!!" << endl;
+		exit(1);
+	}else{
+		cout << "OPEN: " << file_weight1->GetName() << endl;
+		fw_z->Print();
+	}
+
+	cout << "OPEN weight file: " << file_weight0->GetName() << endl;
+	cout << "OPEN weight file: " << file_weight1->GetName() << endl;
+
+	/*
+	hfvtx_zerr_res_svx_mult = new TH3F("hfvtx_zerr_res_svx_mult","",100,0,0.1,250,-0.25,0.25,30,0,30);
+	hfvtx_xerr_res_svx_mult = new TH3F("hfvtx_xerr_res_svx_mult","",100,0,0.1,250,-0.25,0.25,30,0,30);
+	hfvtx_yerr_res_svx_mult = new TH3F("hfvtx_yerr_res_svx_mult","",100,0,0.1,250,-0.25,0.25,30,0,30);
+
+	hfvtx_zerr_res_all_mult = new TH3F("hfvtx_zerr_res_all_mult","",100,0,0.1,250,-0.25,0.25,30,0,30);
+	hfvtx_xerr_res_all_mult = new TH3F("hfvtx_xerr_res_all_mult","",100,0,0.1,250,-0.25,0.25,30,0,30);
+	hfvtx_yerr_res_all_mult = new TH3F("hfvtx_yerr_res_all_mult","",100,0,0.1,250,-0.25,0.25,30,0,30);
+
+	hfvtx_zerr_res = new TH2F("hfvtx_zerr_res","",250,0,0.25,250,0,0.25);
+	*/
+
+	//
+	//hmult_simz_fvtx = new TH2F("hmult_simz_fvtx","",50,0,50,40,-20,20);
+	//hmult_simz_svx = new TH2F("hmult_simz_svx","",30,0,30,40,-20,20);
+	//hmult_simz_all = new TH2F("hmult_simz_all","",80,0,80,40,-20,20);
+
+	//hmult_simz_zreco_fvtx = new TH2F("hmult_simz_zreco_fvtx","",50,0,50,40,-20,20);
+	//hmult_simz_zreco_svx = new TH2F("hmult_simz_zreco_svx","",30,0,30,40,-20,20);
+	//hmult_simz_zreco_all = new TH2F("hmult_simz_zreco_all","",80,0,80,40,-20,20);
+	//
+
+	//
+	//hmult_cut_simz_fvtx = new TH2F("hmult_cut_simz_fvtx","",50,0,50,40,-20,20);
+	//hmult_cut_simz_svx = new TH2F("hmult_cut_simz_svx","",30,0,30,40,-20,20);
+	//hmult_cut_simz_all = new TH2F("hmult_cut_simz_all","",80,0,80,40,-20,20);
+
+	//hmult_cut_simz_zreco_fvtx = new TH2F("hmult_cut_simz_zreco_fvtx","",50,0,50,40,-20,20);
+	//hmult_cut_simz_zreco_svx = new TH2F("hmult_cut_simz_zreco_svx","",30,0,30,40,-20,20);
+	//hmult_cut_simz_zreco_all = new TH2F("hmult_cut_simz_zreco_all","",80,0,80,40,-20,20);
+	//
+
+	//heta_simz = new TH2F("heta_simz","",100,-5,5,40,-20,20);
+
+	//
+	//heta_simz_svx0 = new TH2F("heta_simz_svx0","",100,-5,5,40,-20,20);
+	//heta_simz_svx0_zreco = new TH2F("heta_simz_svx0_zreco","",100,-5,5,40,-20,20);
+	//hsimz_svx0 = new TH1F("hsimz_svx0","",40,-20,20);
+	//hsimz_svx0_zreco = new TH1F("hsimz_svx0_zreco","",40,-20,20);
+	//
+
+	//h2mult_fvtx_svx = new TH2F("h2mult_fvtx_svx","",50,0,50,30,0,30);
+	//h2mult_fvtx_svx_zreco = new TH2F("h2mult_fvtx_svx_zreco","",50,0,50,30,0,30);
+
+	//
+	//heta_simz_svx0_fvtx2345 = new TH2F("heta_simz_svx0_fvtx2345","",100,-5,5,40,-20,20);
+	//heta_simz_svx0_fvtx2345_zreco = new TH2F("heta_simz_svx0_fvtx2345_zreco","",100,-5,5,40,-20,20);
+	//hsimz_svx0_fvtx2345 = new TH1F("hsimz_svx0_fvtx2345","",40,-20,20);
+	//hsimz_svx0_fvtx2345_zreco = new TH1F("hsimz_svx0_fvtx2345_zreco","",40,-20,20);
+	//
+
+	cout << "SET SIM: " << _is_sim << endl;
+	cout << "IS UPSILON: " << _is_upsilon << endl;
+	cout << "IS PHI: " << _is_phi << endl;
+	cout << "TARGET PID: " << _target_pid << endl;
+	MUTOO::PRINT(std::cout,"**");
+  return 0;
+}
+
+//______________________________________________________
+int mFillAnaTree::InitRun(PHCompositeNode *top_node)
+{
+	MUTOO::PRINT(std::cout,"mFillAnaTree::InitRun");
+
+	if ( first ){
+		//MCHepMCParticleContainer
+		hepmc_con = findNode::getClass<MCHepMCParticleContainer>(top_node,"MCHepMCParticleContainer");
+		if (!hepmc_con){
+			std::cout << PHWHERE << "mFillAnaTree:: MCHepMCParticleContainer not in Node Tree" << std::endl;
+			//return ABORTRUN;
+		}
+
+		//SingleMuonContainer
+		sngmucon = findNode::getClass<SingleMuonContainer>(top_node,"SingleMuonContainer");
+		if (!sngmucon){
+			std::cout << PHWHERE << "mFillAnaTree:: SingleMuonContainer not in Node Tree" << std::endl;
+			//return ABORTRUN;
+		}
+
+		//VtxOut
+		vtx = findNode::getClass<VtxOut>(top_node,"VtxOut");
+		if (!vtx){
+			std::cout << PHWHERE << "mFillAnaTree:: VtxOut not in Node Tree" << std::endl;
+			//return ABORTRUN;
+		}
+
+		//TrigLvl1
+		triglvl1 = findNode::getClass<TrigLvl1>(top_node,"TrigLvl1");
+		if (!triglvl1){
+			std::cout << PHWHERE << "mFillAnaTree:: TrigLvl1 not in Node Tree" << std::endl;
+			//return ABORTRUN;
+		}
+
+		//FvtxCompactTrkMap
+		//fvtxtrk_map = findNode::getClass<TFvtxCompactTrkMap>(top_node,"TFvtxCompactTrkMap");
+	      	if (!fvtxtrk_map){
+		        std::cout << PHWHERE << "mFillAnaTree:: TFvtxCompactTrkMap not in Node Tree" << std::endl;
+			//return ABORTRUN;
+		}
+
+		//SvxSegmentList
+		//	svxseg_list = findNode::getClass<SvxSegmentList>(top_node,"SvxSegmentList");
+	      	if (!svxseg_list){
+	                std::cout << PHWHERE << "mFillAnaTree:: SvxSegmentList not in Node Tree" << std::endl;
+			//return ABORTRUN;
+		}
+
+		phpythia_con = findNode::getClass<PHPythiaContainer>(top_node,"PHPythia");
+		if (!phpythia_con){
+			std::cout << PHWHERE << "mFillAnaTree:: PHPythiaContainer not in Node Tree" << std::endl;
+			//return ABORTRUN;
+		}
+
+		MUTOO::PRINT(std::cout,"mFillAnaTree::GetNodes");
+		first = false;
+	}
+
+
+	MUTOO::PRINT(std::cout,"**");
+	return 0;
+}
+
+//______________________________________________________
+int mFillAnaTree::process_event(PHCompositeNode *top_node)
+{
+
+	_nevent++;
+
+	//float mult_fvtx_map = fvtxtrk_map->count();
+
+	float mult_fvtx_prim_cut = 0.0;
+	float mult_svx_prim_cut = 0.0;
+	float mult_fvtx_prim_cut_eta25 = 0.0;
+
+	//float mult_fvtxN = sngmucon->get_Evt_Mult_FVTXN();
+	//float mult_fvtxS = sngmucon->get_Evt_Mult_FVTXS();
+	float mult_svx	= sngmucon->get_Evt_Mult_SVX();
+
+	//scan TFvtxCompactTrkMap
+	if ( fvtxtrk_map ){
+		TFvtxCompactTrkMap::iterator iter( fvtxtrk_map->range() );
+		while( TFvtxCompactTrkMap::const_pointer fvtx_ptr = iter.next() ) {
+			float fvtx_chi2 = fvtx_ptr->get()->get_chi2_ndf();
+			if ( fvtx_chi2>4.0 || isnan(fvtx_chi2) ) continue;
+			if ( fvtx_ptr->get()->get_nhits()<2.5 ) continue;
+
+			mult_fvtx_prim_cut++;
+
+			float rapidity = fvtx_ptr->get()->get_fvtx_eta();
+			if ( fabs(rapidity)<2.5 ) mult_fvtx_prim_cut_eta25++;
+		} 
+	}
+
+	//scan SvxSegmentList
+	if ( svxseg_list ){
+		for(int isvx=0; isvx<svxseg_list->get_nSegments(); ++isvx) {
+			SvxSegment *segment = svxseg_list->get_segment(isvx);
+
+			if (isnan(segment->get3Momentum(0))) continue;
+			if (isnan(segment->get3Momentum(1))) continue;
+			if (isnan(segment->get3Momentum(2))) continue;
+			if (isnan(segment->getMomentum())) continue;
+
+			if (isnan(segment->getInnerMostProjectedPosition(0))) continue;
+			if (isnan(segment->getInnerMostProjectedPosition(1))) continue;
+			if (isnan(segment->getInnerMostProjectedPosition(2))) continue;
+
+			mult_svx_prim_cut++;
+		}    
+	}else{
+		mult_svx_prim_cut = mult_svx;
+	}
+
+	/*
+	bool trig_S = false;
+	bool trig_N = false;
+
+	if ( triglvl1 ){
+		unsigned int trig_scaled = triglvl1->get_lvl1_trigscaled();
+
+		if ( (trig_scaled&0x00200000) || (trig_scaled&0x00800000) || (trig_scaled&0x02000000) || (trig_scaled&0x08000000) ) trig_S = true; 
+		if ( (trig_scaled&0x00100000) || (trig_scaled&0x00400000) || (trig_scaled&0x01000000) || (trig_scaled&0x04000000) ) trig_N = true; 
+	}
+	*/
+
+
+	//cout << "Fvtx Mult. pdst : " << mult_fvtxN+mult_fvtxS << ", prim. cut : " << mult_fvtx_prim_cut << endl;
+
+	//get vertex information
+	PHPoint sim_vertex = vtx->get_Vertex("SIM");
+	//PHPoint fvtx_vertex = vtx->get_Vertex("FVTX");
+	//PHPoint fvtx_vertex_err = vtx->get_VertexError("FVTX");
+	float simZ = sim_vertex.getZ();
+	//float simX = sim_vertex.getX();
+	//float simY = sim_vertex.getY();
+
+	//float fvtxZ = sngmucon->get_Evt_fvtxZ();
+	//float fvtxX = sngmucon->get_Evt_fvtxX();
+	//float fvtxY = sngmucon->get_Evt_fvtxY();
+	//float fvtxZ_err = sngmucon->get_Evt_fvtxZ_Err();
+	//float fvtxX_err = sngmucon->get_Evt_fvtxX_Err();
+	//float fvtxY_err = sngmucon->get_Evt_fvtxY_Err();
+
+	vector<int> mu_vertex_begin; 
+	mu_vertex_begin.clear();
+
+	vector<float> mu_pT;
+	vector<float> mu_rap;
+	vector<float> mu_eta;
+	vector<float> jpsi_pT;
+	vector<float> jpsi_rap;
+
+	int count = 0;
+
+	if ( hepmc_con ){
+		int n_hepmc_p = hepmc_con->get_nMCHepMCParticles();
+		//Check double-Jpsi event
+		for (int ip=0; ip<n_hepmc_p; ip++){
+			MCHepMCParticle *hepmc = hepmc_con->get_MCHepMCParticle(ip);
+			int mc_pid 		= hepmc->get_mc_pid();
+			int mc_status = hepmc->get_mc_status();
+
+			if ( mc_status==1 && abs(mc_pid)==13 ){
+				mu_vertex_begin.push_back(hepmc->get_mc_vertex_begin());
+
+				float mc_px 	= hepmc->get_mc_px();
+				float mc_py 	= hepmc->get_mc_py();
+				float mc_pz 	= hepmc->get_mc_pz();
+				float mc_e		= hepmc->get_mc_e();
+
+				float mc_pT		= sqrt(mc_px*mc_px + mc_py*mc_py);
+				float mc_ptot	= sqrt(mc_pT*mc_pT + mc_pz*mc_pz); 
+				float mc_eta	= 0.5*log((mc_ptot+mc_pz)/(mc_ptot-mc_pz));
+				float mc_y		= 0.5*log((mc_e+mc_pz)/(mc_e-mc_pz));
+
+				mu_pT.push_back(mc_pT);
+				mu_rap.push_back(mc_y);
+				mu_eta.push_back(mc_eta);
+			}    
+
+			if ( mc_status==2 && mc_pid==_target_pid ){
+				float mc_px 	= hepmc->get_mc_px();
+				float mc_py 	= hepmc->get_mc_py();
+				float mc_pz 	= hepmc->get_mc_pz();
+				float mc_e		= hepmc->get_mc_e();
+
+				float mc_pT		= sqrt(mc_px*mc_px + mc_py*mc_py);
+				float mc_y		= 0.5*log((mc_e+mc_pz)/(mc_e-mc_pz));
+
+				//cout << "mc_pT: " << mc_pT << endl;
+
+				jpsi_pT.push_back(mc_pT);
+				jpsi_rap.push_back(mc_y);
+
+				count++;
+			}
+		}//n_hepmc_p
+	}else if ( phpythia_con ){
+
+		for (unsigned int ip=0; ip<phpythia_con->size(); ip++){
+			TMCParticle *part = phpythia_con->getParticle(ip);
+
+			/*
+			if ( part->GetKF()==443 || abs(part->GetKF())==13 ){
+				cout
+					<< part->GetKF() << " "
+					<< part->GetKS() << " "
+					<< part->GetPx() << " "
+					<< part->GetPy() << " "
+					<< part->GetPz() << " "
+					<< endl;
+			}
+			*/
+
+			if ( abs(part->GetKF())==13 && part->GetKS()==1 ){
+				float mc_px = part->GetPx();
+				float mc_py = part->GetPy();
+				float mc_pz = part->GetPz();
+				float mc_e = part->GetEnergy();
+
+				float mc_pT		= sqrt(mc_px*mc_px + mc_py*mc_py);
+				float mc_p		= sqrt(mc_pT*mc_pT + mc_pz*mc_pz);
+				float mc_eta	= 0.5*log((mc_p+mc_pz)/(mc_p-mc_pz));
+				float mc_y		= 0.5*log((mc_e+mc_pz)/(mc_e-mc_pz));
+
+				mu_pT.push_back(mc_pT);
+				mu_rap.push_back(mc_y);
+				mu_eta.push_back(mc_eta);
+			}
+
+
+			if ( part->GetKF()==_target_pid && part->GetKS()==11 ){
+				float mc_px = part->GetPx();
+				float mc_py = part->GetPy();
+				float mc_pz = part->GetPz();
+				float mc_e = part->GetEnergy();
+
+				float mc_pT		= sqrt(mc_px*mc_px + mc_py*mc_py);
+				float mc_y		= 0.5*log((mc_e+mc_pz)/(mc_e-mc_pz));
+
+				jpsi_pT.push_back(mc_pT);
+				jpsi_rap.push_back(mc_y);
+
+				count++;
+			}
+		}//ip
+
+	}
+
+	if ( count>1 ){
+		cout << "Skip event containing multiple " << _target_pid << ":" << count << ", muon: " << int(mu_pT.size()) << endl;
+		cout << "pT0 : " << jpsi_pT[0] << ", y0: " << jpsi_rap[0] << ", pT1: " << jpsi_pT[1] << ", y1: " << jpsi_rap[1] << endl;
+		_nevent_skip++;
+		return ABORTEVENT;
+	}
+
+	if ( count>0 && (_is_sim==3 || _is_sim==4) ){
+		cout << "Skip event containing J/psi in cc-bar/bb-bar sim: " << count << endl;
+		return ABORTEVENT;
+	}  
+
+	count = 0;
+
+	//float eta_Jpsi = -999;
+	float y_Jpsi = -999;
+	//int Jpsi_vertex_begin = 0;
+
+
+	if ( hepmc_con ){
+		int n_hepmc_p = hepmc_con->get_nMCHepMCParticles();
+
+		//Fill generated Jpsi information
+		for (int ip=0; ip<n_hepmc_p; ip++){
+
+			MCHepMCParticle *hepmc = hepmc_con->get_MCHepMCParticle(ip);
+
+			int mc_pid 		= hepmc->get_mc_pid();
+			int mc_status = hepmc->get_mc_status();
+
+			if ( !(mc_status==2 && mc_pid==_target_pid) ) continue;
+
+			float mc_px 	= hepmc->get_mc_px();
+			float mc_py 	= hepmc->get_mc_py();
+			float mc_pz 	= hepmc->get_mc_pz();
+			float mc_e		= hepmc->get_mc_e();
+
+			float mc_pT		= sqrt(mc_px*mc_px + mc_py*mc_py);
+			float mc_ptot	= sqrt(mc_pT*mc_pT + mc_pz*mc_pz); 
+			float mc_eta	= 0.5*log((mc_ptot+mc_pz)/(mc_ptot-mc_pz));
+			float mc_y		= 0.5*log((mc_e+mc_pz)/(mc_e-mc_pz));
+
+			//Jpsi_vertex_begin = hepmc->get_mc_vertex_begin();
+
+			//eta_Jpsi = mc_eta;
+			y_Jpsi = mc_y;
+
+			count++;
+
+			hpT_eta_zvtx->Fill(mc_pT, mc_eta, simZ);
+			hpT_y_zvtx->Fill(mc_pT, mc_y, simZ);
+
+			if ( fabs(y_Jpsi)>1.2 && fabs(y_Jpsi)<2.2 ){
+				hd_pT_y_zvtx->Fill(mc_pT, mc_y, simZ);
+			}
+
+			float weight_pT_dAu = 1.0;
+			float weight_y_dAu = 1.0;
+			float weight_pT_pp = 1.0;
+			float weight_y_pp = 1.0;
+			float weight_z = 1.0;
+
+			weight_z = fw_z->Eval(simZ);
+
+			//if ( fabs(y_Jpsi)>1.2 && fabs(y_Jpsi)<2.2 ){
+			if ( fabs(y_Jpsi)>0.6 && fabs(y_Jpsi)<3.0 ){
+
+				if ( y_Jpsi<0 ){
+					weight_y_dAu = fw_y_dAu->Eval(y_Jpsi);
+					weight_pT_dAu = (mc_pT<8.0) ? fw_pT_dAu_bwd->Eval(mc_pT) : fw_pT_dAu_bwd->Eval(8.0);
+				}else{
+					weight_y_dAu = fw_y_dAu->Eval(y_Jpsi);
+					weight_pT_dAu = (mc_pT<8.0) ? fw_pT_dAu_fwd->Eval(mc_pT) : fw_pT_dAu_fwd->Eval(8.0);
+				}
+
+				weight_y_pp = fw_y_pp->Eval(y_Jpsi);
+				weight_pT_pp = (mc_pT<8.0) ? fw_pT_pp->Eval(mc_pT) : fw_pT_pp->Eval(8.0);
+
+				if ( fabs(y_Jpsi)>1.2 && fabs(y_Jpsi)<2.2 ){
+					for (unsigned int ii=0; ii<mu_pT.size(); ii++){
+						hmu_pT_y_zvtx->Fill(mu_pT[ii],mu_rap[ii],simZ);
+						hmu_pT_y_zvtx_w_dAu->Fill(mu_pT[ii],mu_rap[ii],simZ,weight_pT_dAu*weight_y_dAu*weight_z);
+						hmu_pT_y_zvtx_w_pp->Fill(mu_pT[ii],mu_rap[ii],simZ,weight_pT_pp*weight_y_pp*weight_z);
+					}
+
+					if ( mu_pT.size()==2 ){
+						hmu_y0_y1->Fill(mu_rap[0],mu_rap[1]);
+					}
+				}
+			}
+            
+			hpT_y_zvtx_w_z->Fill(mc_pT, mc_y, simZ, weight_z);
+
+			hpT_y_zvtx_w_dAu->Fill(mc_pT, mc_y, simZ, weight_pT_dAu*weight_y_dAu*weight_z);
+			hpT_y_zvtx_w_dAu_pT->Fill(mc_pT, mc_y, simZ, weight_pT_dAu*weight_z);
+			hpT_y_zvtx_w_dAu_y->Fill(mc_pT, mc_y, simZ, weight_y_dAu*weight_z);
+
+			hpT_y_zvtx_w_pp->Fill(mc_pT, mc_y, simZ, weight_pT_pp*weight_y_pp*weight_z);
+			hpT_y_zvtx_w_pp_pT->Fill(mc_pT, mc_y, simZ, weight_pT_pp*weight_z);
+			hpT_y_zvtx_w_pp_y->Fill(mc_pT, mc_y, simZ, weight_y_pp*weight_z);
+		}//n_hepmc_p
+	}else if ( phpythia_con ){
+
+		for (unsigned int ip=0; ip<phpythia_con->size(); ip++){
+			TMCParticle *part = phpythia_con->getParticle(ip);
+
+			if ( part->GetKF()!=_target_pid || part->GetKS()!=11 ) continue;
+
+			float mc_px = part->GetPx();
+			float mc_py = part->GetPy();
+			float mc_pz = part->GetPz();
+			float mc_e = part->GetEnergy();
+
+			float mc_pT		= sqrt(mc_px*mc_px + mc_py*mc_py);
+			float mc_ptot	= sqrt(mc_pT*mc_pT + mc_pz*mc_pz); 
+			float mc_eta	= 0.5*log((mc_ptot+mc_pz)/(mc_ptot-mc_pz));
+			float mc_y		= 0.5*log((mc_e+mc_pz)/(mc_e-mc_pz));
+
+			y_Jpsi = mc_y;
+
+			count++;
+
+			hpT_eta_zvtx->Fill(mc_pT, mc_eta, simZ);
+			hpT_y_zvtx->Fill(mc_pT, mc_y, simZ);
+
+			if ( fabs(y_Jpsi)>1.2 && fabs(y_Jpsi)<2.2 ){
+				hd_pT_y_zvtx->Fill(mc_pT, mc_y, simZ);
+			}
+
+			float weight_pT_dAu = 1.0;
+			float weight_y_dAu = 1.0;
+			float weight_pT_pp = 1.0;
+			float weight_y_pp = 1.0;
+			float weight_z = 1.0;
+
+			weight_z = fw_z->Eval(simZ);
+
+			//if ( fabs(y_Jpsi)>1.2 && fabs(y_Jpsi)<2.2 ){
+			if ( fabs(y_Jpsi)>0.6 && fabs(y_Jpsi)<3.0 ){
+
+				if ( y_Jpsi<0 ){
+					weight_y_dAu = fw_y_dAu->Eval(y_Jpsi);
+					weight_pT_dAu = (mc_pT<8.0) ? fw_pT_dAu_bwd->Eval(mc_pT) : fw_pT_dAu_bwd->Eval(8.0);
+				}else{
+					weight_y_dAu = fw_y_dAu->Eval(y_Jpsi);
+					weight_pT_dAu = (mc_pT<8.0) ? fw_pT_dAu_fwd->Eval(mc_pT) : fw_pT_dAu_fwd->Eval(8.0);
+				}
+
+				weight_y_pp = fw_y_pp->Eval(y_Jpsi);
+				weight_pT_pp = (mc_pT<8.0) ? fw_pT_pp->Eval(mc_pT) : fw_pT_pp->Eval(8.0);
+
+				if ( fabs(y_Jpsi)>1.2 && fabs(y_Jpsi)<2.2 ){
+					for (unsigned int ii=0; ii<mu_pT.size(); ii++){
+						hmu_pT_y_zvtx->Fill(mu_pT[ii],mu_rap[ii],simZ);
+						hmu_pT_y_zvtx_w_dAu->Fill(mu_pT[ii],mu_rap[ii],simZ,weight_pT_dAu*weight_y_dAu*weight_z);
+						hmu_pT_y_zvtx_w_pp->Fill(mu_pT[ii],mu_rap[ii],simZ,weight_pT_pp*weight_y_pp*weight_z);
+					}
+
+					if ( mu_pT.size()==2 ){
+						hmu_y0_y1->Fill(mu_rap[0],mu_rap[1]);
+					}
+				}
+			}
+
+			hpT_y_zvtx_w_z->Fill(mc_pT, mc_y, simZ, weight_z);
+
+			hpT_y_zvtx_w_dAu->Fill(mc_pT, mc_y, simZ, weight_pT_dAu*weight_y_dAu*weight_z);
+			hpT_y_zvtx_w_dAu_pT->Fill(mc_pT, mc_y, simZ, weight_pT_dAu*weight_z);
+			hpT_y_zvtx_w_dAu_y->Fill(mc_pT, mc_y, simZ, weight_y_dAu*weight_z);
+
+			hpT_y_zvtx_w_pp->Fill(mc_pT, mc_y, simZ, weight_pT_pp*weight_y_pp*weight_z);
+			hpT_y_zvtx_w_pp_pT->Fill(mc_pT, mc_y, simZ, weight_pT_pp*weight_z);
+			hpT_y_zvtx_w_pp_y->Fill(mc_pT, mc_y, simZ, weight_y_pp*weight_z);
+
+		}//ip
+
+	}
+
+	if ( count>1 ){
+		cout << "##################################################" << endl;
+		cout << "FIND event containing multiple Jpsi after check: " << count << endl;
+		cout << "##################################################" << endl;
+	}
+
+	/*
+	if ( 0 ){
+		//Find mother
+		for (int ip=0; ip<n_hepmc_p; ip++){
+			MCHepMCParticle *hepmc = hepmc_con->get_MCHepMCParticle(ip);
+
+			int mc_vertex_end = hepmc->get_mc_vertex_end();
+
+			if ( mc_vertex_end!= Jpsi_vertex_begin ) continue;
+			int mc_pid 		= hepmc->get_mc_pid();
+
+			if ( (fabs(mc_pid)>500 && fabs(mc_pid)<600) || (fabs(mc_pid)>5000 && fabs(mc_pid)<6000) ){
+				float mc_px 	= hepmc->get_mc_px();
+				float mc_py 	= hepmc->get_mc_py();
+				float mc_pz 	= hepmc->get_mc_pz();
+
+				float mc_pT		= sqrt(mc_px*mc_px + mc_py*mc_py);
+				//float mc_ptot	= sqrt(mc_pT*mc_pT + mc_pz*mc_pz); 
+				float mc_e		= hepmc->get_mc_e();
+				float mc_y		= 0.5*log((mc_e+mc_pz)/(mc_e-mc_pz));
+				//float mc_eta	= 0.5*log((mc_ptot+mc_pz)/(mc_ptot-mc_pz));
+
+				if ( fabs(y_Jpsi)>1.2 && fabs(y_Jpsi)<2.2 ){
+					hp_pT_y_zvtx->Fill(mc_pT, mc_y, simZ);
+				}
+			}
+
+			//cout << "MC_PID: " << mc_pid << endl;
+		}
+	}
+	*/
+
+	//if ( fabs(eta_Jpsi)<1.2 || fabs(eta_Jpsi)>2.2 ) return EVENT_OK;
+
+	//rapidity distribution
+	/*
+	for (int ip=0; ip<n_hepmc_p; ip++){
+
+		MCHepMCParticle *hepmc = hepmc_con->get_MCHepMCParticle(ip);
+
+		int mc_pid 		= hepmc->get_mc_pid();
+		int mc_status = hepmc->get_mc_status();
+
+		if ( !(mc_status==1) ) continue;
+		if ( mc_pid==22 ) continue;
+
+		float mc_px 	= hepmc->get_mc_px();
+		float mc_py 	= hepmc->get_mc_py();
+		float mc_pz 	= hepmc->get_mc_pz();
+		
+		float mc_pT		= sqrt(mc_px*mc_px + mc_py*mc_py);
+		float mc_ptot	= sqrt(mc_pT*mc_pT + mc_pz*mc_pz); 
+		float mc_eta	= 0.5*log((mc_ptot+mc_pz)/(mc_ptot-mc_pz));
+
+		//
+		heta_simz->Fill(mc_eta, simZ);
+
+		//if ( (mult_fvtxN+mult_fvtxS+mult_svx)>=3 && (mult_fvtxN+mult_fvtxS+mult_svx)<=5 ){
+		if ( mult_svx<0.5 ){
+			heta_simz_svx0->Fill(mc_eta, simZ);
+			if ( !isnan(fvtxZ) ){
+				heta_simz_svx0_zreco->Fill(mc_eta, simZ);
+			}
+		}//total mult 3-5
+	}//n_hepmc_p
+	*/
+
+	/*
+	if ( mult_svx<0.5 ){
+		hsimz_svx0->Fill(simZ);
+		if ( !isnan(fvtxZ) ){
+			hsimz_svx0_zreco->Fill(simZ);
+		}
+	}
+	*/
+
+	/*
+	if ( mult_svx<0.5 && mult_fvtx_prim_cut>=2 && mult_fvtx_prim_cut<=3 ){
+		hsimz_svx0_fvtx2345->Fill(simZ);
+		if ( !isnan(fvtxZ) ){
+			hsimz_svx0_fvtx2345_zreco->Fill(simZ);
+		}
+
+		TFvtxCompactTrkMap::iterator iter( fvtxtrk_map->range() );
+		while( TFvtxCompactTrkMap::const_pointer fvtx_ptr = iter.next() ) {
+			float fvtx_chi2 = fvtx_ptr->get()->get_chi2_ndf();
+			if ( fvtx_chi2>4.0 || isnan(fvtx_chi2) ) continue;
+			if ( fvtx_ptr->get()->get_nhits()<2.5 ) continue;
+
+			float rapidity = fvtx_ptr->get()->get_fvtx_eta();
+
+			heta_simz_svx0_fvtx2345->Fill(rapidity, simZ);
+
+			if ( !isnan(fvtxZ) ){
+				heta_simz_svx0_fvtx2345_zreco->Fill(rapidity, simZ);
+			}
+		}//FvtxCompactTrk 
+	}//multiplicity condition
+	*/
+
+	/*
+	if ( fabs(simZ)<10.0 ){
+			//h2mult_fvtx_svx->Fill(mult_fvtxN+mult_fvtxS, mult_svx);
+			//h2mult_fvtx_svx->Fill(mult_fvtx_prim_cut, mult_svx);
+			h2mult_fvtx_svx->Fill(mult_fvtx_prim_cut_eta25, mult_svx);
+		if ( !isnan(fvtxZ) ){
+			//h2mult_fvtx_svx_zreco->Fill(mult_fvtxN+mult_fvtxS, mult_svx);
+			h2mult_fvtx_svx_zreco->Fill(mult_fvtx_prim_cut_eta25, mult_svx);
+		}
+	}
+	*/
+
+	//Fill event information
+	//hmult_simz_fvtx->Fill(mult_fvtxN+mult_fvtxS, simZ);
+	//hmult_simz_all->Fill(mult_fvtxN+mult_fvtxS+mult_svx, simZ);
+	//hmult_simz_svx->Fill(mult_svx, simZ);
+
+	//hmult_cut_simz_fvtx->Fill(mult_fvtx_prim_cut_eta25, simZ);
+	//hmult_cut_simz_all->Fill(mult_fvtx_prim_cut_eta25+mult_svx_prim_cut, simZ);
+	//hmult_cut_simz_svx->Fill(mult_svx_prim_cut, simZ);
+
+	/*
+	if ( isnan(fvtxZ) ){
+
+	}else{
+
+		if ( fabs(simZ)<10 ){
+			hfvtx_zerr_res_svx_mult->Fill(fvtxZ_err, fvtxZ-simZ, mult_svx);
+			hfvtx_xerr_res_svx_mult->Fill(fvtxX_err, fvtxX-simX, mult_svx);
+			hfvtx_yerr_res_svx_mult->Fill(fvtxY_err, fvtxY-simY, mult_svx);
+
+			hfvtx_zerr_res_all_mult->Fill(fvtxZ_err, fvtxZ-simZ, mult_svx+mult_fvtx_prim_cut_eta25);
+			hfvtx_xerr_res_all_mult->Fill(fvtxX_err, fvtxX-simX, mult_svx+mult_fvtx_prim_cut_eta25);
+			hfvtx_yerr_res_all_mult->Fill(fvtxY_err, fvtxY-simY, mult_svx+mult_fvtx_prim_cut_eta25);
+
+			if ( mult_svx>0 ){
+				hfvtx_zerr_res->Fill(fabs(fvtxZ-simZ), fvtxZ_err);
+			}
+		}
+
+		hmult_simz_zreco_fvtx->Fill(mult_fvtxN+mult_fvtxS, simZ);
+		hmult_simz_zreco_all->Fill(mult_fvtxN+mult_fvtxS+mult_svx, simZ);
+		hmult_simz_zreco_svx->Fill(mult_svx, simZ);
+
+		hmult_cut_simz_zreco_fvtx->Fill(mult_fvtx_prim_cut_eta25, simZ);
+		hmult_cut_simz_zreco_all->Fill(mult_fvtx_prim_cut_eta25+mult_svx_prim_cut, simZ);
+		hmult_cut_simz_zreco_svx->Fill(mult_svx_prim_cut, simZ);
+
+	}//isnan(fvtxZ)
+	*/
+
+
+	return EVENT_OK;
+}
+
+//______________________________________________________
+int mFillAnaTree::End(PHCompositeNode *top_node)
+{
+  MUTOO::PRINT(std::cout,"mFillAnaTree::End");
+
+	cout << "Number of processed events: " << _nevent << endl;
+	cout << "Number of skipped events: " << _nevent_skip << endl;
+	cout << "Fraction of skipped events: " << _nevent_skip*1.0/_nevent << endl;
+
+	file_out->cd();
+	file_out->Write();
+
+	delete file_out;
+
+	MUTOO::PRINT(std::cout,"**");
+  return 0;
+}
+
