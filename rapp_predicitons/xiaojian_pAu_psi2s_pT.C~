@@ -1,0 +1,254 @@
+#include <TF1.h>
+#include <TMath.h>
+#include <Math/MinimizerOptions.h>
+#include <TVirtualFitter.h>
+#include <TMatrixDSym.h>
+#include <TFile.h>
+#include <TCanvas.h>
+#include <TH1D.h>
+#include <TGraph.h>
+#include <TLegend.h>
+#include <TStyle.h>
+#include <TROOT.h>
+#include <TLatex.h>
+#include <TChain.h>
+#include <TCanvas.h>
+#include <TH1.h>
+#include <TFitResult.h>
+#include <TH1F.h>
+#include <TH2D.h>
+#include <TH2F.h>
+#include <TF1.h>
+#include <TLine.h>
+#include <TRandom1.h>
+#include <TPolyLine.h>
+#include <TRandom3.h>
+#include <fstream>
+#include <iostream>
+#include <TGraphErrors.h>
+#include <TMultiGraph.h>
+#include <TObjArray.h>
+#include <TNtuple.h>
+#include <TPaveText.h>
+#include <TGraphAsymmErrors.h>
+#include <TAxis.h>
+
+using namespace std;
+
+void xiaojian_pAu_psi2s_pT()
+{
+
+  const int bins_pT_pAu = 6;
+  const int ncolumns = 5;  
+
+
+  std::string filename[1][2] = {"/gpfs/mnt/gpfs02/phenix/hhj/hhj1/klsmith/Jpsis/Run15pAu/fit_NOFVTX/krista_fits/tony_bestfit_parameters/sanghoon_corrbg/xiaojian_cent_predictions/pAu_0100_bkwd.dat",
+				"/gpfs/mnt/gpfs02/phenix/hhj/hhj1/klsmith/Jpsis/Run15pAu/fit_NOFVTX/krista_fits/tony_bestfit_parameters/sanghoon_corrbg/xiaojian_cent_predictions/pAu_0100_fwd.dat"};
+ 
+   
+  const int narm = 2;
+  const int ncent = 1;
+
+  double transport_pT[narm][ncent][ncolumns][bins_pT_pAu] = {0};
+
+  double pt = 0;
+  double RpAu_theory = 0;
+  double RpAu_theory_min = 0;
+  double RpAu_theory_max = 0;
+  double RpAu_2s_theory_min = 0;
+  double RpAu_2s_theory_max = 0;
+  double RpAu_theory_err_down = 0;
+  double RpAu_theory_err_up = 0;
+
+  int counter = 0;
+  int cent = 0;
+
+  int cent_initial[1] = {0};
+  int cent_final[1] = {100};
+ 
+  for(int cent = 0; cent < ncent; cent++)
+    {
+      for(int arm = 0; arm < narm; arm++)
+	{
+	 
+	  ifstream Run15pAu_pT_prediction_files( filename[cent][arm].c_str() ); 
+	  if(Run15pAu_pT_prediction_files)
+	    {
+	      
+	      cout << "filename: " << filename[cent][arm].c_str() << endl;
+	      counter = 0;
+
+	       do 
+	      	{
+		  double pT, f0, f1, f2, f3, abs_diff;	  
+		  Run15pAu_pT_prediction_files >> pT >> f0 >> f1 >> f2 >> f3;
+		  RpAu_theory_min = f0; RpAu_theory_max = f1; RpAu_2s_theory_min = f2; RpAu_2s_theory_max = f3;
+		  abs_diff = RpAu_2s_theory_max - RpAu_2s_theory_min;
+		  RpAu_theory = RpAu_2s_theory_min + 0.5*abs_diff;
+		  RpAu_theory_err_down = RpAu_theory - RpAu_2s_theory_min;
+		  RpAu_theory_err_up = RpAu_2s_theory_max -  RpAu_theory;
+		  
+		  if(abs_diff < 0)
+		    cout << "negative " << endl;
+
+		  transport_pT[arm][cent][0][counter] = RpAu_theory;
+		  transport_pT[arm][cent][1][counter] = RpAu_theory_err_down;
+		  transport_pT[arm][cent][2][counter] = RpAu_theory_err_up;
+		  transport_pT[arm][cent][3][counter] = RpAu_2s_theory_min;
+		  transport_pT[arm][cent][4][counter] = RpAu_2s_theory_max;
+		  cout << "central transport_pT[" << arm << "][" << cent << "][0][" << counter << "]:" <<  transport_pT[arm][cent][0][counter] << endl;		  
+		  cout << "central transport_pT[" << arm << "][" << cent << "][1][" << counter << "]:" <<  transport_pT[arm][cent][1][counter] << endl;		  
+		  cout << "abs diff: " << abs_diff << endl; 
+	      	  
+		  RpAu_theory_min = 0;
+		  RpAu_theory_max = 0;
+		  RpAu_2s_theory_min = 0;
+		  RpAu_2s_theory_max = 0;
+		  RpAu_theory = 0;
+		  RpAu_theory_err_down = 0;
+		  RpAu_theory_err_up = 0;
+		  abs_diff = 0;
+		  counter++;
+		  
+		  cout << counter << endl;
+		}while(counter <= 5);
+
+	    } // if
+	 	 
+	} // for arm
+    } // for cent
+ 
+  double x_errors_pT[6] = {0};
+  
+  double pt_array[6] =  {0.5,1.5,2.5,3.5,4.5,5.5};
+
+  TGraphAsymmErrors *gr_transport_pT_0100_N;
+  TGraphAsymmErrors *gr_transport_pT_0100_S;
+  
+   
+  gr_transport_pT_0100_N = new TGraphAsymmErrors(bins_pT_pAu,pt_array, transport_pT[1][0][0], x_errors_pT, x_errors_pT, transport_pT[1][0][1], transport_pT[1][0][2]);
+  gr_transport_pT_0100_S = new TGraphAsymmErrors(bins_pT_pAu,pt_array, transport_pT[0][0][0], x_errors_pT, x_errors_pT, transport_pT[0][0][1], transport_pT[0][0][2]);
+
+   
+  // Plot 
+
+  TCanvas *c0 = new TCanvas("c0","RpAl MB Predictions",200,10,700,500);
+  //TCanvas *c0 = new TCanvas("c0","RpAl MB Predictions",200,10,700,125);
+ 
+  c0->Divide(2,2);
+  c0->cd(1); 
+  gPad->SetGridy();
+  gPad->SetFrameLineWidth(2);
+  gPad->SetFrameLineColor(kBlack);
+  gPad->SetFrameLineStyle(1);
+  gPad->SetBottomMargin(2);
+  gPad->SetLeftMargin(3);
+  
+
+  gr_transport_pT_0100_S->SetTitle("#psi(2S) Transport Model Predictions");
+  gr_transport_pT_0100_S->GetXaxis()->SetTitle("p_{T} GeV/c");
+  gr_transport_pT_0100_S->GetYaxis()->SetTitle("R_{pAu}");
+  gr_transport_pT_0100_S->SetMarkerStyle(20);
+  gr_transport_pT_0100_S->SetMarkerColor(kBlue+2);
+  gr_transport_pT_0100_S->SetMarkerSize(1);
+  gr_transport_pT_0100_S->GetYaxis()->SetRangeUser(0,2);
+  gr_transport_pT_0100_S->GetXaxis()->SetLimits(0,7);
+  gr_transport_pT_0100_S->GetXaxis()->SetLabelFont(5);
+  gr_transport_pT_0100_S->GetXaxis()->SetLabelSize(15);
+  gr_transport_pT_0100_S->GetYaxis()->SetLabelFont(5);
+  gr_transport_pT_0100_S->GetYaxis()->SetLabelSize(15);
+  gr_transport_pT_0100_S->GetYaxis()->SetTitleOffset(1.43);
+  gr_transport_pT_0100_S->GetYaxis()->SetTitleFont(5);
+  gr_transport_pT_0100_S->GetYaxis()->SetTitleSize(25);
+  gr_transport_pT_0100_S->GetXaxis()->SetTitleOffset(1.93);
+  gr_transport_pT_0100_S->GetXaxis()->SetTitleFont(5);
+  gr_transport_pT_0100_S->GetXaxis()->SetTitleSize(18);
+  gr_transport_pT_0100_S->SetMarkerStyle(20);                                             
+  gr_transport_pT_0100_S->Draw("AP");
+
+ {
+ TLatex l0;
+  l0.SetTextSize(0.05);
+  l0.SetTextAlign(13);
+  l0.SetTextColor(1);
+
+  char text0[100];
+  char text1[100];
+  char text2[100];
+  
+  // sprintf(text0,"%d - %d Centrality", cent_initial[0], cent_final[0]);
+  sprintf(text0,"0-100%% Centrality");
+  sprintf(text1,"-2.2 < y < -1.2");
+  sprintf(text2,"Du & Rapp (2019)");
+  l0.SetTextAlign(12);
+  l0.DrawLatexNDC(0.57, 0.86, text0); 
+  l0.DrawLatexNDC(0.57, 0.78, text1); 
+  l0.DrawLatexNDC(0.57, 0.70, text2); 
+  }
+
+  c0->cd(2);  
+  gPad->SetGridy();
+  gPad->SetFrameLineWidth(2);
+  gPad->SetFrameLineColor(kBlack);
+  gPad->SetFrameLineStyle(1);
+  gPad->SetBottomMargin(2);
+  gPad->SetLeftMargin(3);
+
+  
+  gr_transport_pT_0100_N->SetTitle("#psi(2S) Transport Model Predictions");
+  gr_transport_pT_0100_N->GetXaxis()->SetTitle("p_{T} GeV/c");
+  gr_transport_pT_0100_N->GetYaxis()->SetTitle("R_{pAu}");
+  gr_transport_pT_0100_N->SetMarkerStyle(20);
+  gr_transport_pT_0100_N->SetMarkerColor(kRed+2);
+  gr_transport_pT_0100_N->SetMarkerSize(1);
+  gr_transport_pT_0100_N->GetYaxis()->SetRangeUser(0,2);
+  gr_transport_pT_0100_N->GetXaxis()->SetLimits(0,7);
+  gr_transport_pT_0100_N->GetXaxis()->SetLabelFont(5);
+  gr_transport_pT_0100_N->GetXaxis()->SetLabelSize(15);
+  gr_transport_pT_0100_N->GetYaxis()->SetLabelFont(5);
+  gr_transport_pT_0100_N->GetYaxis()->SetLabelSize(15);
+  gr_transport_pT_0100_N->GetYaxis()->SetTitleOffset(1.43);
+  gr_transport_pT_0100_N->GetYaxis()->SetTitleFont(5);
+  gr_transport_pT_0100_N->GetYaxis()->SetTitleSize(25);
+  gr_transport_pT_0100_N->GetXaxis()->SetTitleOffset(1.93);
+  gr_transport_pT_0100_N->GetXaxis()->SetTitleFont(5);
+  gr_transport_pT_0100_N->GetXaxis()->SetTitleSize(18);
+  gr_transport_pT_0100_N->SetMarkerStyle(20);                                             
+  gr_transport_pT_0100_N->Draw("AP");
+   
+  {
+  TLatex l0;
+  l0.SetTextSize(0.05);
+  l0.SetTextAlign(13);
+  l0.SetTextColor(1);
+
+  
+  char text0[100];
+  char text1[100];
+  char text2[100];
+  
+  //sprintf(text0,"%d - %d Centrality", cent_initial[0], cent_final[0]);
+  sprintf(text0,"0-100%% Centrality");
+  sprintf(text1,"1.2 < y < 2.2");
+  sprintf(text2,"Du & Rapp (2019)");
+  l0.SetTextAlign(12);
+  l0.DrawLatexNDC(0.57, 0.86, text0); 
+  l0.DrawLatexNDC(0.57, 0.78, text1); 
+  l0.DrawLatexNDC(0.57, 0.70, text2); 
+  }
+
+  //// write Asymm TGraphs to  root file
+   
+   TFile *h = new TFile("RpAu_2S_transport_MB_pT.root", "RECREATE");
+  h->cd();
+   
+  gr_transport_pT_0100_N->SetName("RpAu_2S_transport_0100_fwd");
+  gr_transport_pT_0100_S->SetName("RpAu_2S_transport_0100_bkwd");
+   
+  gr_transport_pT_0100_N->Write();
+  gr_transport_pT_0100_S->Write();
+
+}
+
+
+
